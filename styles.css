@@ -1,15 +1,14 @@
 body {
     margin: 0;
     padding: 0;
-    background: white;
+    background: linear-gradient(135deg, #ff9966, #ff5e62);
     height: 100vh;
     touch-action: manipulation;
 }
 .phone-screen {
-    width: 90vw;
-    aspect-ratio: 9/16;
-    max-width: 400px;
-    margin: auto;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
     background: linear-gradient(135deg, #ff9966, #ff5e62);
     display: flex;
     justify-content: center;
@@ -38,6 +37,7 @@ body {
     margin-top: -100px;
     margin-left: -30px;
     transform: translate(-50%, -50%);
+    display: none;
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
@@ -73,5 +73,22 @@ body {
         opacity: 1; 
         transform: scale(1.1) rotate(10deg);
         filter: drop-shadow(0 0 15px white) brightness(1.2);
+    }
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 
+            0 0 5px #fff,
+            0 0 10px #ffff00,
+            0 0 20px #ffff00;
+    }
+    to {
+        text-shadow: 
+            0 0 10px #fff,
+            0 0 20px #ffff00,
+            0 0 30px #ffff00,
+            0 0 40px #ffff00,
+            0 0 50px #ffff00;
     }
 }
