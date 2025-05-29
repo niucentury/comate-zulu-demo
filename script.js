@@ -174,3 +174,120 @@ video.addEventListener('canplay', () => {
     console.log('视频已加载');
     handleAutoPlay();
 });
+
+// 礼花效果
+class Firework {
+    constructor() {
+        this.reset();
+        this.particles = [];
+    }
+
+    reset() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = window.innerHeight;
+        this.speed = Math.random() * 5 + 10;
+        this.angle = Math.random() * Math.PI - Math.PI/2;
+        this.velocity = {
+            x: Math.sin(this.angle) * this.speed / 10,
+            y: -Math.cos(this.angle) * this.speed
+        };
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.radius = 2;
+        this.life = 50 + Math.random() * 20;
+    }
+
+    update() {
+        this.velocity.y += 0.05;
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.life--;
+
+        if (this.life <= 0 || this.y > window.innerHeight) {
+            this.explode();
+            this.reset();
+        }
+    }
+
+    explode() {
+        const particleCount = 50 + Math.floor(Math.random() * 30);
+        for (let i = 0; i < particleCount; i++) {
+            this.particles.push({
+                x: this.x,
+                y: this.y,
+                radius: Math.random() * 2 + 1,
+                color: this.color,
+                velocity: {
+                    x: Math.random() * 6 - 3,
+                    y: Math.random() * 6 - 3
+                },
+                life: 50 + Math.random() * 50,
+                friction: 0.95
+            });
+        }
+    }
+
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+
+        for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+
+            p.velocity.x *= p.friction;
+            p.velocity.y *= p.friction;
+            p.x += p.velocity.x;
+            p.y += p.velocity.y;
+            p.life--;
+
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+                i--;
+            }
+        }
+    }
+}
+
+// 初始化礼花效果
+function initFireworks() {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '999';
+    canvas.style.pointerEvents = 'none';
+    document.body.appendChild(canvas);
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const ctx = canvas.getContext('2d');
+    const fireworks = Array(5).fill().map(() => new Firework());  // 增加礼花数量
+
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        fireworks.forEach(firework => {
+            firework.update();
+            firework.draw(ctx);
+        });
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+}
+
+// 页面加载完成后初始化礼花
+window.addEventListener('load', initFireworks);
