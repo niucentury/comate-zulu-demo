@@ -42,6 +42,8 @@ function createFlower(x, y, index) {
     
     // 闪光动画
     flower.style.animation = `sparkle ${Math.random() * 2 + 1}s infinite alternate`;
+    flower.style.cursor = 'pointer';
+    flower.style.pointerEvents = 'auto';  // 确保花朵可以接收点击事件
     
     container.appendChild(flower);
     return flower;
@@ -72,6 +74,7 @@ function createDaysCounter() {
     counterContainer.style.color = '#fff';
     counterContainer.style.textAlign = 'center';
     counterContainer.style.zIndex = '1000';
+    counterContainer.id = 'counter-container';  // 添加ID以便后续操作
     let hue = 0;
     
     function updateGlowColor() {
@@ -113,16 +116,148 @@ function createDaysCounter() {
     counterContainer.appendChild(daysCounter);
     counterContainer.appendChild(timeDisplay);
     document.querySelector('.phone-screen').appendChild(counterContainer);
+    return counterContainer;  // 返回counterContainer以便后续使用
 }
 
 // 初始化花朵并收集坐标
 let pathPoints = [];
-createDaysCounter();
+const counterContainer = createDaysCounter();  // 保存counterContainer的引用
+
+// 视频加载检测和事件处理
+const video = document.getElementById('heart-video');
+let currentVideoIndex = 0;  // 用于跟踪当前播放的视频
+const videoSources = ['videos/1.mp4', 'videos/2.mp4'];  // 视频源列表
+
+// 调整视频内容大小和位置
+function adjustVideoSize() {
+    if (video) {
+        if (currentVideoIndex === 0) {  // 如果是 1.mp4
+            video.style.transform = 'translate(-50%, -43%) scale(0.7)';  // 缩小视频内容并向下移动
+        } else {  // 如果是 2.mp4
+            video.style.transform = 'translate(-50%, -35%) scale(0.6)';  // 恢复原始大小和位置
+        }
+    }
+}
+
+// 切换视频源
+function switchVideo() {
+    if (video) {
+        currentVideoIndex = (currentVideoIndex + 1) % videoSources.length;  // 循环切换视频索引
+        video.src = videoSources[currentVideoIndex];
+        video.pause();  // 确保切换后视频暂停
+        video.currentTime = 0;  // 重置视频到开始位置
+        adjustVideoSize();  // 调整视频内容大小
+        console.log(`切换到视频: ${videoSources[currentVideoIndex]}`);
+    }
+}
+
+// 设置初始视频源
+function initVideo() {
+    if (video) {
+        video.src = videoSources[currentVideoIndex];
+        video.pause();  // 确保初始视频暂停
+        video.currentTime = 0;  // 重置视频到开始位置
+        adjustVideoSize();  // 调整视频内容大小
+        console.log(`设置初始视频: ${videoSources[currentVideoIndex]}`);
+    }
+}
+
+// 确保视频元素存在
+if (video) {
+    // 设置初始视频源
+    initVideo();
+
+    // 添加视频播放结束事件监听
+    video.addEventListener('ended', function() {
+        console.log('视频播放结束');
+        const videoContainer = document.querySelector('.video-container');
+        if (videoContainer) {
+            videoContainer.style.display = 'none';
+            video.pause();
+            video.currentTime = 0;
+            // 显示文字
+            if (counterContainer) {
+                counterContainer.style.display = 'block';
+            }
+            // 切换视频源（但不自动播放）
+            switchVideo();
+        }
+    });
+
+    // 添加视频错误处理
+    video.addEventListener('error', (e) => {
+        console.error('视频加载失败:', e);
+        const errorMsg = `视频加载失败: ${video.error.code}
+        可能原因:
+        1. 视频文件损坏
+        2. 视频格式不支持
+        3. 编码问题
+        请检查视频文件是否存在且可播放`;
+        alert(errorMsg);
+        
+        // 显示备用内容
+        const videoContainer = document.querySelector('.video-container');
+        if (videoContainer) {
+            videoContainer.innerHTML = '<div style="color:white;text-align:center;padding-top:50%">视频无法加载</div>';
+            videoContainer.style.maskImage = 'none';
+            videoContainer.style.webkitMaskImage = 'none';
+            // 显示文字
+            if (counterContainer) {
+                counterContainer.style.display = 'block';
+            }
+        }
+    });
+
+    // 添加视频加载成功事件
+    video.addEventListener('loadeddata', () => {
+        console.log('视频数据已加载');
+    });
+
+    // 添加视频播放事件
+    video.addEventListener('play', () => {
+        console.log('视频开始播放');
+    });
+
+    // 添加视频暂停事件
+    video.addEventListener('pause', () => {
+        console.log('视频已暂停');
+    });
+}
+
+// 修改花朵点击事件处理
 for (let i = 0; i < 100; i++) {
     const t = (i / 100) * Math.PI * 2;
     const { x, y } = heartShape(t);
-    flowers.push(createFlower(x, y, i));
-    pathPoints.push(`${x + centerX},${y + centerY}`);
+    const flower = createFlower(x, y, i);
+    flowers.push(flower);
+    pathPoints.push(`${x},${y}`);
+    
+    // 为每个花朵添加点击事件
+    flower.addEventListener('click', () => {
+        if (video) {
+            const videoContainer = document.querySelector('.video-container');
+            if (videoContainer) {
+                // 显示视频容器
+                videoContainer.style.display = 'block';
+                // 隐藏文字
+                if (counterContainer) {
+                    counterContainer.style.display = 'none';
+                }
+                // 确保视频从头开始播放
+                video.currentTime = 0;
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log('视频播放被阻止:', e);
+                        // 如果视频播放失败，重新显示文字
+                        if (counterContainer) {
+                            counterContainer.style.display = 'block';
+                        }
+                    });
+                }
+            }
+        }
+    });
 }
 
 // 创建动态SVG蒙版
@@ -131,49 +266,6 @@ const svgData = `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"><
 const videoContainer = document.querySelector('.video-container');
 videoContainer.style.maskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgData)}')`;
 videoContainer.style.webkitMaskImage = `url('data:image/svg+xml;utf8,${encodeURIComponent(svgData)}')`;
-
-// 视频加载检测
-const video = document.getElementById('heart-video');
-video.addEventListener('error', () => {
-    console.error('视频加载失败');
-    alert('视频加载失败，请检查videos/1.mp4文件');
-});
-
-// 处理自动播放
-function handleAutoPlay() {
-    const promise = video.play();
-    if (promise !== undefined) {
-        promise.catch(error => {
-            // 自动播放失败时显示播放按钮
-            const playButton = document.createElement('div');
-            playButton.className = 'play-button';
-            playButton.innerHTML = '▶';
-            playButton.style.position = 'absolute';
-            playButton.style.top = '50%';
-            playButton.style.left = '50%';
-            playButton.style.transform = 'translate(-50%, -50%)';
-            playButton.style.fontSize = '50px';
-            playButton.style.color = 'white';
-            playButton.style.cursor = 'pointer';
-            playButton.style.zIndex = '100';
-            playButton.addEventListener('click', () => {
-                video.play();
-                playButton.remove();
-            });
-            document.querySelector('.video-container').appendChild(playButton);
-        });
-    }
-}
-
-// 页面交互后尝试播放
-document.addEventListener('click', () => {
-    handleAutoPlay();
-}, { once: true });
-
-video.addEventListener('canplay', () => {
-    console.log('视频已加载');
-    handleAutoPlay();
-});
 
 // 礼花效果
 class Firework {
@@ -185,7 +277,7 @@ class Firework {
     reset() {
         this.x = Math.random() * window.innerWidth;
         this.y = window.innerHeight;
-        this.speed = Math.random() * 5 + 10;
+        this.speed = Math.random() * 5 + 20;
         this.angle = Math.random() * Math.PI - Math.PI/2;
         this.velocity = {
             x: Math.sin(this.angle) * this.speed / 10,
@@ -193,7 +285,7 @@ class Firework {
         };
         this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
         this.radius = 2;
-        this.life = 50 + Math.random() * 20;
+        this.life = 28 + Math.random() * 8;
     }
 
     update() {
@@ -220,7 +312,7 @@ class Firework {
                     x: Math.random() * 6 - 3,
                     y: Math.random() * 6 - 3
                 },
-                life: 50 + Math.random() * 50,
+                life: 30 + Math.random() * 20,
                 friction: 0.95
             });
         }
@@ -269,7 +361,7 @@ function initFireworks() {
     canvas.height = window.innerHeight;
 
     const ctx = canvas.getContext('2d');
-    const fireworks = Array(5).fill().map(() => new Firework());  // 增加礼花数量
+    const fireworks = Array(3).fill().map(() => new Firework());  // 增加礼花数量
 
     function animate() {
         requestAnimationFrame(animate);

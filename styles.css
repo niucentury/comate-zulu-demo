@@ -34,16 +34,19 @@ body {
     overflow: hidden;
     top: 50%;
     left: 50%;
-    margin-top: -100px;
-    margin-left: -30px;
+    margin-top: -30px;
+    margin-left: 0px;
     transform: translate(-50%, -50%);
-    display: none;
     mask-size: contain;
     mask-repeat: no-repeat;
     mask-position: center;
     -webkit-mask-size: contain;
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-position: center;
+    display: none;
+    opacity: 1;
+    visibility: visible;
+    background: transparent;
 }
 .video-container video {
     position: absolute;
@@ -54,6 +57,9 @@ body {
     min-height: 100%;
     width: auto;
     height: auto;
+    object-fit: cover;
+    z-index: 1001;
+    transition: transform 0.3s ease;
 }
 .flower {
     position: absolute;
